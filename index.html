@@ -1,133 +1,592 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معرض قبل وبعد</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-        /* إخفاء شريط التمرير الأفقي مع الحفاظ على إمكانية التمرير */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>معرض قبل / بعد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d11;
+    --panel:#12151b;
+    --panel-2:#171b22;
+    --line:#232936;
+    --text:#e8ecf2;
+    --muted:#8b95a7;
+    --after:#34d399;
+    --before:#fbbf24;
+    --radius:18px;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  html,body{ height:100%; }
+
+  body{
+    margin:0;
+    overflow:hidden;
+    font-family:'Cairo', system-ui, -apple-system, "Segoe UI", sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(900px 600px at 90% -15%, #1a2233 0%, transparent 60%),
+      radial-gradient(700px 500px at 0% 110%, #1a1526 0%, transparent 55%),
+      var(--bg);
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===== الهيكل العام ===== */
+  .app{
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .topbar{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 22px 10px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+  }
+
+  .brand .dot{
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--after);
+    box-shadow:0 0 14px rgba(52,211,153,.9);
+    flex:0 0 auto;
+  }
+
+  .brand h1{
+    margin:0;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.2px;
+    white-space:nowrap;
+  }
+
+  .counter{
+    display:flex;
+    align-items:baseline;
+    gap:4px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .counter #counterNow{ color:var(--text); font-weight:800; }
+  .counter .sep{ opacity:.4; }
+
+  /* ===== الشبكة ===== */
+  .workspace{
+    flex:1 1 auto;
+    min-height:0;
+    display:grid;
+    grid-template-columns:150px minmax(0,1fr);
+    gap:16px;
+    padding:0 20px max(20px, env(safe-area-inset-bottom));
+  }
+
+  /* ===== شريط المصغرات ===== */
+  .rail{
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:2px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#2a3140 transparent;
+  }
+  .rail::-webkit-scrollbar{ width:6px; }
+  .rail::-webkit-scrollbar-track{ background:transparent; }
+  .rail::-webkit-scrollbar-thumb{ background:#2a3140; border-radius:99px; }
+
+  .thumb{
+    position:relative;
+    flex:0 0 auto;
+    width:100%;
+    aspect-ratio:4/3;
+    padding:0;
+    border:0;
+    border-radius:14px;
+    overflow:hidden;
+    background:var(--panel-2);
+    cursor:pointer;
+    opacity:.5;
+    transition:opacity .25s ease, transform .25s ease;
+    outline:none;
+  }
+  .thumb img{
+    display:block;
+    width:100%; height:100%;
+    object-fit:cover;
+    pointer-events:none;
+  }
+  .thumb::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    border:2px solid transparent;
+    transition:border-color .25s ease, box-shadow .25s ease;
+    pointer-events:none;
+  }
+  .thumb:hover{ opacity:.85; transform:translateY(-2px); }
+  .thumb:focus-visible{ box-shadow:0 0 0 3px rgba(52,211,153,.35); }
+  .thumb[aria-current="true"]{ opacity:1; }
+  .thumb[aria-current="true"]::after{
+    border-color:var(--after);
+    box-shadow:inset 0 0 22px rgba(0,0,0,.55);
+  }
+
+  /* ===== المسرح ===== */
+  .stage{
+    min-width:0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .frame{
+    position:relative;
+    flex:1 1 auto;
+    min-height:0;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:linear-gradient(180deg,#141821,#0f1218);
+    border:1px solid var(--line);
+    cursor:pointer;
+    touch-action:pan-y;
+    isolation:isolate;
+    transition:border-color .45s ease, box-shadow .45s ease;
+    outline:none;
+  }
+  .frame:focus-visible{ outline:2px solid var(--after); outline-offset:3px; }
+
+  .frame[data-state="after"]{
+    border-color:rgba(52,211,153,.28);
+    box-shadow:0 30px 70px -35px rgba(0,0,0,.95),
+               0 0 0 1px rgba(52,211,153,.07);
+  }
+  .frame[data-state="before"]{
+    border-color:rgba(251,191,36,.28);
+    box-shadow:0 30px 70px -35px rgba(0,0,0,.95),
+               0 0 0 1px rgba(251,191,36,.07);
+  }
+
+  .layer{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    opacity:0;
+    pointer-events:none;
+    user-select:none;
+    transition:opacity .5s cubic-bezier(.4,0,.2,1);
+  }
+  .frame[data-state="after"]  .layer-after,
+  .frame[data-state="before"] .layer-before{ opacity:1; }
+
+  .badge{
+    position:absolute;
+    top:14px;
+    inset-inline-start:14px;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:6px 13px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.3px;
+    background:rgba(10,12,16,.62);
+    border:1px solid rgba(255,255,255,.09);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    transition:color .35s ease, border-color .35s ease;
+    z-index:2;
+  }
+  .badge::before{
+    content:"";
+    width:6px; height:6px;
+    border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 10px currentColor;
+  }
+  .frame[data-state="after"]  .badge{ color:var(--after);  border-color:rgba(52,211,153,.35); }
+  .frame[data-state="before"] .badge{ color:var(--before); border-color:rgba(251,191,36,.35); }
+
+  /* ===== أدوات التحكم ===== */
+  .controls{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .icon-btn{
+    flex:0 0 auto;
+    width:46px; height:46px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    cursor:pointer;
+    transition:background .2s ease, transform .15s ease, border-color .2s ease;
+  }
+  .icon-btn:hover{ background:#1f252f; border-color:#313a4a; }
+  .icon-btn:active{ transform:scale(.94); }
+
+  .toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    min-width:200px;
+    padding:13px 26px;
+    border-radius:999px;
+    border:0;
+    background:linear-gradient(180deg,#f6f8fb,#dde3ec);
+    color:#0b0d11;
+    font:inherit;
+    font-size:15px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 14px 34px -16px rgba(255,255,255,.55);
+    transition:transform .15s ease, filter .2s ease, box-shadow .25s ease;
+  }
+  .toggle:hover{ filter:brightness(1.04); }
+  .toggle:active{ transform:scale(.97); }
+
+  .hint{
+    flex:0 0 auto;
+    margin:0;
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    opacity:.8;
+  }
+  .hint kbd{
+    font-family:inherit;
+    font-size:11px;
+    padding:1px 7px;
+    border-radius:6px;
+    background:#181d25;
+    border:1px solid var(--line);
+    color:#b9c2d0;
+  }
+
+  /* ===== الجوال ===== */
+  @media (max-width:820px){
+    .topbar{ padding:12px 16px 8px; }
+
+    .workspace{
+      grid-template-columns:minmax(0,1fr);
+      grid-template-rows:minmax(0,1fr) auto;
+      gap:10px;
+      padding:0 12px max(12px, env(safe-area-inset-bottom));
+    }
+
+    .stage{ order:1; }
+    .frame{ border-radius:16px; }
+
+    .rail{
+      order:2;
+      flex-direction:row;
+      height:76px;
+      gap:8px;
+      padding:0 0 2px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+    }
+    .thumb{
+      width:94px;
+      height:100%;
+      aspect-ratio:auto;
+      border-radius:12px;
+    }
+
+    .toggle{
+      flex:1 1 auto;
+      min-width:0;
+      padding:13px 18px;
+      font-size:14px;
+    }
+    .hint{ display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+  }
+</style>
 </head>
-<body class="h-screen flex flex-col md:flex-row overflow-hidden bg-[#121212] text-zinc-200">
+<body>
 
-    <!-- القائمة الجانبية للصور المصغرة (أفقية للموبايل وتتحول لرأسية للكمبيوتر) -->
-    <aside class="w-full md:w-64 bg-[#1a1a1a] border-b md:border-b-0 md:border-l border-zinc-800 p-4 shrink-0 z-10">
-        <h2 class="text-xs font-bold text-zinc-400 mb-3 hidden md:block">الصور</h2>
-        <div id="thumbnails" class="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto no-scrollbar">
-            <!-- يتم توليد الصور المصغرة بـ JS -->
-        </div>
-    </aside>
+<div class="app">
 
-    <!-- منطقة العرض الرئيسية -->
-    <main class="flex-1 flex flex-col justify-between items-center p-4 md:p-8 h-full overflow-hidden">
-        
-        <!-- إطار عرض الصورة -->
-        <div class="flex-1 flex items-center justify-center w-full max-w-3xl overflow-hidden my-auto">
-            <div class="relative w-full h-full max-h-[70vh] flex items-center justify-center rounded-xl overflow-hidden bg-[#1a1a1a] border border-zinc-800">
-                <!-- شارة الحالة الحالية (قبل / بعد) -->
-                <span id="stateBadge" class="absolute top-3 right-3 bg-black/70 text-zinc-200 text-xs px-3 py-1 rounded-md border border-zinc-700 z-10 font-bold">
-                    بعد
-                </span>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>معرض قبل / بعد</h1>
+    </div>
+    <div class="counter">
+      <span id="counterNow">1</span>
+      <span class="sep">/</span>
+      <span id="counterAll">3</span>
+    </div>
+  </header>
 
-                <!-- عنصر الصورة -->
-                <img id="mainImage" src="" alt="عرض قبل وبعد" class="max-w-full max-h-full object-contain transition-opacity duration-200" onerror="handleError(this)">
-            </div>
-        </div>
+  <div class="workspace">
 
-        <!-- زر التبديل البسيط أسفل الصورة -->
-        <div class="w-full max-w-xs pt-4 pb-2">
-            <button id="toggleBtn" onclick="toggleState()" class="w-full py-3 px-6 bg-zinc-200 hover:bg-white text-zinc-900 font-bold rounded-xl transition-all active:scale-95 shadow-md">
-                عرض صورة "قبل"
-            </button>
-        </div>
+    <!-- شريط المصغرات (يمين على الكمبيوتر، أسفل على الجوال) -->
+    <aside class="rail" id="rail" aria-label="الصور المصغرة"></aside>
+
+    <!-- منطقة العرض -->
+    <main class="stage">
+
+      <div class="frame" id="frame" data-state="after"
+           role="button" tabindex="0"
+           aria-label="اضغط للتبديل بين حالتي قبل وبعد">
+        <img class="layer layer-before" id="imgBefore" alt="الصورة قبل" draggable="false">
+        <img class="layer layer-after"  id="imgAfter"  alt="الصورة بعد" draggable="false">
+        <span class="badge" id="badge">بعد</span>
+      </div>
+
+      <div class="controls">
+        <button class="icon-btn" id="prevBtn" type="button" aria-label="الصورة السابقة">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+
+        <button class="toggle" id="toggleBtn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 4v13"/><path d="M4 14l3 3 3-3"/>
+            <path d="M17 20V7"/><path d="M14 10l3-3 3 3"/>
+          </svg>
+          <span id="toggleText">عرض "قبل"</span>
+        </button>
+
+        <button class="icon-btn" id="nextBtn" type="button" aria-label="الصورة التالية">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="hint">
+        اضغط على الصورة أو <kbd>المسافة</kbd> للتبديل — واستخدم <kbd>←</kbd> <kbd>→</kbd> للتنقل
+      </p>
 
     </main>
+  </div>
+</div>
 
-    <script>
-        // مصفوفة الصور الثلاث بنفس المسميات والمسارات المطلوبة
-        const images = [
-            { before: 'img/1.webp', after: 'img/1.2.webp' },
-            { before: 'img/2.webp', after: 'img/2.2.webp' },
-            { before: 'img/3.webp', after: 'img/3.2.webp' }
-        ];
+<script>
+(function () {
+  'use strict';
 
-        let currentIndex = 0;
-        let isAfter = true; // الحالة الافتراضية عند البدء هي "بعد"
+  /* ====== بيانات الصور ====== */
+  const IMAGES = [
+    { before: 'img/1.webp', after: 'img/1.2.webp' },
+    { before: 'img/2.webp', after: 'img/2.2.webp' },
+    { before: 'img/3.webp', after: 'img/3.2.webp' }
+  ];
 
-        const mainImage = document.getElementById('mainImage');
-        const stateBadge = document.getElementById('stateBadge');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const thumbnailsContainer = document.getElementById('thumbnails');
+  /* ====== العناصر ====== */
+  const frame       = document.getElementById('frame');
+  const imgBefore   = document.getElementById('imgBefore');
+  const imgAfter    = document.getElementById('imgAfter');
+  const badge       = document.getElementById('badge');
+  const toggleBtn   = document.getElementById('toggleBtn');
+  const toggleText  = document.getElementById('toggleText');
+  const prevBtn     = document.getElementById('prevBtn');
+  const nextBtn     = document.getElementById('nextBtn');
+  const rail        = document.getElementById('rail');
+  const counterNow  = document.getElementById('counterNow');
+  const counterAll  = document.getElementById('counterAll');
 
-        // إنشاء القائمة الجانبية المصغرة (تعتمد صورة "بعد")
-        function initThumbnails() {
-            thumbnailsContainer.innerHTML = '';
-            images.forEach((item, index) => {
-                const btn = document.createElement('button');
-                btn.className = `shrink-0 rounded-lg overflow-hidden border-2 transition-all w-20 h-16 md:w-full md:h-28 relative bg-[#121212] ${
-                    index === currentIndex ? 'border-zinc-200 opacity-100' : 'border-transparent opacity-50 hover:opacity-80'
-                }`;
-                btn.onclick = () => selectImage(index);
+  /* ====== الحالة ====== */
+  let index = 0;
+  let showAfter = true;
+  const thumbs = [];
 
-                btn.innerHTML = `
-                    <img src="${item.after}" class="w-full h-full object-cover" onerror="handleError(this, 'صورة ${index + 1}')">
-                `;
-                thumbnailsContainer.appendChild(btn);
-            });
-        }
+  /* ====== أدوات ====== */
+  function fallback(img, label) {
+    if (img.dataset.fb === '1') return;
+    img.dataset.fb = '1';
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">' +
+        '<rect width="800" height="600" fill="#171b22"/>' +
+        '<text x="400" y="312" text-anchor="middle" ' +
+              'font-family="Cairo, sans-serif" font-size="34" fill="#5b6577">' +
+          label +
+        '</text>' +
+      '</svg>';
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
 
-        // تحديث الصورة المعروضة على الشاشة
-        function updateDisplay() {
-            const currentItem = images[currentIndex];
-            mainImage.src = isAfter ? currentItem.after : currentItem.before;
-            
-            if (isAfter) {
-                stateBadge.textContent = 'بعد';
-                toggleBtn.textContent = 'عرض صورة "قبل"';
-            } else {
-                stateBadge.textContent = 'قبل';
-                toggleBtn.textContent = 'عرض صورة "بعد"';
-            }
+  function setSrc(img, src, label) {
+    if (img.dataset.src === src) return;
+    img.dataset.src = src;
+    img.onerror = function () { fallback(img, label); };
+    img.src = src;
+  }
 
-            initThumbnails();
-        }
+  /* ====== بناء المصغرات مرة واحدة فقط ====== */
+  function buildThumbs() {
+    const frag = document.createDocumentFragment();
 
-        // التبديل بين حالة قبل وبعد
-        function toggleState() {
-            isAfter = !isAfter;
-            updateDisplay();
-        }
+    IMAGES.forEach(function (item, i) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'thumb';
+      btn.setAttribute('aria-label', 'الصورة رقم ' + (i + 1));
 
-        // اختيار صورة من القائمة الجانبية
-        function selectImage(index) {
-            currentIndex = index;
-            isAfter = true; // إعادة الضبط لعرض "بعد" عند اختيار صورة جديدة
-            updateDisplay();
-        }
+      const im = document.createElement('img');
+      im.alt = '';
+      im.loading = 'lazy';
+      im.decoding = 'async';
+      im.addEventListener('error', function () {
+        fallback(im, 'صورة ' + (i + 1));
+      }, { once: true });
+      im.src = item.after;
 
-        // صورة توضيحية بسيطة بحال عدم وجود الصور في المجلد المحلي
-        function handleError(img, text) {
-            const label = text || (isAfter ? `صورة ${currentIndex + 1} (بعد)` : `صورة ${currentIndex + 1} (قبل)`);
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="600" height="400" fill="%23222222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%23888888">${label}</text></svg>`;
-            img.src = `data:image/svg+xml;utf8,${svg}`;
-        }
+      btn.appendChild(im);
+      btn.addEventListener('click', function () { select(i); });
 
-        // بدء التشغيل
-        updateDisplay();
-    </script>
+      frag.appendChild(btn);
+      thumbs.push(btn);
+    });
+
+    rail.appendChild(frag);
+  }
+
+  /* ====== العرض ====== */
+  function render() {
+    const item = IMAGES[index];
+    if (!item) return;
+
+    setSrc(imgBefore, item.before, 'صورة ' + (index + 1) + ' — قبل');
+    setSrc(imgAfter,  item.after,  'صورة ' + (index + 1) + ' — بعد');
+
+    frame.dataset.state = showAfter ? 'after' : 'before';
+    badge.textContent   = showAfter ? 'بعد' : 'قبل';
+    toggleText.textContent = showAfter ? 'عرض "قبل"' : 'عرض "بعد"';
+
+    counterNow.textContent = index + 1;
+
+    thumbs.forEach(function (t, i) {
+      t.setAttribute('aria-current', i === index ? 'true' : 'false');
+    });
+
+    const active = thumbs[index];
+    if (active) {
+      active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  /* ====== الأفعال ====== */
+  function toggle() {
+    showAfter = !showAfter;
+    render();
+  }
+
+  function select(i) {
+    index = i;
+    render();
+  }
+
+  function step(dir) {
+    index = (index + dir + IMAGES.length) % IMAGES.length;
+    render();
+  }
+
+  /* ====== الأحداث ====== */
+  toggleBtn.addEventListener('click', toggle);
+  prevBtn.addEventListener('click', function () { step(-1); });
+  nextBtn.addEventListener('click', function () { step(1); });
+
+  /* نقرة على الصورة = تبديل (مع تجاهل النقرة الناتجة عن السحب) */
+  let swiped = false;
+  frame.addEventListener('click', function () {
+    if (swiped) { swiped = false; return; }
+    toggle();
+  });
+
+  /* لوحة المفاتيح */
+  document.addEventListener('keydown', function (e) {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggle();
+    } else if (e.key === 'ArrowLeft') {       /* RTL: التالي */
+      step(1);
+    } else if (e.key === 'ArrowRight') {      /* RTL: السابق */
+      step(-1);
+    }
+  });
+
+  /* السحب باللمس */
+  let startX = null;
+  frame.addEventListener('pointerdown', function (e) {
+    startX = e.clientX;
+    swiped = false;
+  });
+  frame.addEventListener('pointerup', function (e) {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    startX = null;
+    if (Math.abs(dx) > 60) {
+      swiped = true;
+      step(dx < 0 ? 1 : -1);   /* RTL: السحب لليسار = التالي */
+    }
+  });
+  frame.addEventListener('pointercancel', function () { startX = null; });
+
+  /* ====== الإقلاع ====== */
+  function init() {
+    counterAll.textContent = IMAGES.length;
+    buildThumbs();
+
+    /* تحميل مسبق لكل الصور لتبديل فوري */
+    IMAGES.forEach(function (it) {
+      [it.before, it.after].forEach(function (src) {
+        const pre = new Image();
+        pre.src = src;
+      });
+    });
+
+    render();
+  }
+
+  init();
+})();
+</script>
 </body>
 </html>
