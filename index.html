@@ -166,10 +166,10 @@
 <div class="app">
 
   <!-- المسرح -->
-  <div class="stage" id="stage" data-state="after">
+  <div class="stage" id="stage" data-state="before">
     <img class="layer layer-before" id="imgBefore" alt="قبل" draggable="false">
     <img class="layer layer-after"  id="imgAfter"  alt="بعد" draggable="false">
-    <span class="badge" id="badge">بعد</span>
+    <span class="badge" id="badge">قبل</span>
 
     <button class="nav-btn nav-prev" id="prevBtn" type="button" aria-label="السابق">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -217,7 +217,7 @@
   const nextBtn    = document.getElementById('nextBtn');
 
   let index = 0;
-  let showAfter = true;
+  let showAfter = false; /* تبدأ الواجهة بحالة "قبل" */
 
   function fallback(img, label) {
     if (img.dataset.fb === '1') return;
@@ -258,6 +258,7 @@
 
   function step(dir) {
     index = (index + dir + IMAGES.length) % IMAGES.length;
+    showAfter = false; /* عند الانتقال لصورة جديدة نبدأ بـ "قبل" */
     render();
   }
 
