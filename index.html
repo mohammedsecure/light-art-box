@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>معرض قبل / بعد</title>
+<title>قبل / بعد</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0d11;
@@ -14,10 +14,8 @@
     --panel-2:#171b22;
     --line:#232936;
     --text:#e8ecf2;
-    --muted:#8b95a7;
     --after:#34d399;
     --before:#fbbf24;
-    --radius:18px;
   }
 
   *,*::before,*::after{ box-sizing:border-box; }
@@ -37,156 +35,37 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* ===== الهيكل العام ===== */
+  /* ===== الهيكل ===== */
   .app{
     height:100dvh;
     display:flex;
     flex-direction:column;
     overflow:hidden;
-  }
-
-  .topbar{
-    flex:0 0 auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:14px 22px 10px;
-  }
-
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:9px;
-    min-width:0;
-  }
-
-  .brand .dot{
-    width:9px; height:9px;
-    border-radius:50%;
-    background:var(--after);
-    box-shadow:0 0 14px rgba(52,211,153,.9);
-    flex:0 0 auto;
-  }
-
-  .brand h1{
-    margin:0;
-    font-size:15px;
-    font-weight:800;
-    letter-spacing:.2px;
-    white-space:nowrap;
-  }
-
-  .counter{
-    display:flex;
-    align-items:baseline;
-    gap:4px;
-    font-size:13px;
-    font-weight:600;
-    color:var(--muted);
-    font-variant-numeric:tabular-nums;
-  }
-  .counter #counterNow{ color:var(--text); font-weight:800; }
-  .counter .sep{ opacity:.4; }
-
-  /* ===== الشبكة ===== */
-  .workspace{
-    flex:1 1 auto;
-    min-height:0;
-    display:grid;
-    grid-template-columns:150px minmax(0,1fr);
-    gap:16px;
-    padding:0 20px max(20px, env(safe-area-inset-bottom));
-  }
-
-  /* ===== شريط المصغرات ===== */
-  .rail{
-    min-height:0;
-    display:flex;
-    flex-direction:column;
+    padding:10px;
     gap:10px;
-    padding:2px;
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    scrollbar-width:thin;
-    scrollbar-color:#2a3140 transparent;
-  }
-  .rail::-webkit-scrollbar{ width:6px; }
-  .rail::-webkit-scrollbar-track{ background:transparent; }
-  .rail::-webkit-scrollbar-thumb{ background:#2a3140; border-radius:99px; }
-
-  .thumb{
-    position:relative;
-    flex:0 0 auto;
-    width:100%;
-    aspect-ratio:4/3;
-    padding:0;
-    border:0;
-    border-radius:14px;
-    overflow:hidden;
-    background:var(--panel-2);
-    cursor:pointer;
-    opacity:.5;
-    transition:opacity .25s ease, transform .25s ease;
-    outline:none;
-  }
-  .thumb img{
-    display:block;
-    width:100%; height:100%;
-    object-fit:cover;
-    pointer-events:none;
-  }
-  .thumb::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:inherit;
-    border:2px solid transparent;
-    transition:border-color .25s ease, box-shadow .25s ease;
-    pointer-events:none;
-  }
-  .thumb:hover{ opacity:.85; transform:translateY(-2px); }
-  .thumb:focus-visible{ box-shadow:0 0 0 3px rgba(52,211,153,.35); }
-  .thumb[aria-current="true"]{ opacity:1; }
-  .thumb[aria-current="true"]::after{
-    border-color:var(--after);
-    box-shadow:inset 0 0 22px rgba(0,0,0,.55);
   }
 
   /* ===== المسرح ===== */
   .stage{
-    min-width:0;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-  }
-
-  .frame{
     position:relative;
     flex:1 1 auto;
     min-height:0;
-    border-radius:var(--radius);
+    border-radius:16px;
     overflow:hidden;
     background:linear-gradient(180deg,#141821,#0f1218);
     border:1px solid var(--line);
-    cursor:pointer;
     touch-action:pan-y;
     isolation:isolate;
     transition:border-color .45s ease, box-shadow .45s ease;
-    outline:none;
   }
-  .frame:focus-visible{ outline:2px solid var(--after); outline-offset:3px; }
 
-  .frame[data-state="after"]{
+  .stage[data-state="after"]{
     border-color:rgba(52,211,153,.28);
-    box-shadow:0 30px 70px -35px rgba(0,0,0,.95),
-               0 0 0 1px rgba(52,211,153,.07);
+    box-shadow:0 20px 50px -30px rgba(0,0,0,.95);
   }
-  .frame[data-state="before"]{
+  .stage[data-state="before"]{
     border-color:rgba(251,191,36,.28);
-    box-shadow:0 30px 70px -35px rgba(0,0,0,.95),
-               0 0 0 1px rgba(251,191,36,.07);
+    box-shadow:0 20px 50px -30px rgba(0,0,0,.95);
   }
 
   .layer{
@@ -198,23 +77,23 @@
     opacity:0;
     pointer-events:none;
     user-select:none;
-    transition:opacity .5s cubic-bezier(.4,0,.2,1);
+    transition:opacity .45s cubic-bezier(.4,0,.2,1);
   }
-  .frame[data-state="after"]  .layer-after,
-  .frame[data-state="before"] .layer-before{ opacity:1; }
+  .stage[data-state="after"]  .layer-after,
+  .stage[data-state="before"] .layer-before{ opacity:1; }
 
+  /* شارة الحالة */
   .badge{
     position:absolute;
-    top:14px;
-    inset-inline-start:14px;
+    top:10px;
+    inset-inline-start:10px;
     display:inline-flex;
     align-items:center;
-    gap:7px;
-    padding:6px 13px;
+    gap:6px;
+    padding:4px 10px;
     border-radius:999px;
-    font-size:12px;
+    font-size:11px;
     font-weight:800;
-    letter-spacing:.3px;
     background:rgba(10,12,16,.62);
     border:1px solid rgba(255,255,255,.09);
     backdrop-filter:blur(10px);
@@ -224,116 +103,58 @@
   }
   .badge::before{
     content:"";
-    width:6px; height:6px;
+    width:5px; height:5px;
     border-radius:50%;
     background:currentColor;
     box-shadow:0 0 10px currentColor;
   }
-  .frame[data-state="after"]  .badge{ color:var(--after);  border-color:rgba(52,211,153,.35); }
-  .frame[data-state="before"] .badge{ color:var(--before); border-color:rgba(251,191,36,.35); }
+  .stage[data-state="after"]  .badge{ color:var(--after);  border-color:rgba(52,211,153,.35); }
+  .stage[data-state="before"] .badge{ color:var(--before); border-color:rgba(251,191,36,.35); }
 
-  /* ===== أدوات التحكم ===== */
-  .controls{
+  /* أسهم التنقل الجانبية */
+  .nav-btn{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:38px;
+    height:38px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:rgba(10,12,16,.55);
+    border:1px solid rgba(255,255,255,.1);
+    color:var(--text);
+    cursor:pointer;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    transition:background .2s ease, transform .15s ease;
+    z-index:3;
+  }
+  .nav-btn:hover{ background:rgba(30,36,46,.85); }
+  .nav-btn:active{ transform:translateY(-50%) scale(.92); }
+
+  .nav-prev{ inset-inline-start:10px; }
+  .nav-next{ inset-inline-end:10px; }
+
+  /* ===== زر التبديل السفلي ===== */
+  .toggle{
     flex:0 0 auto;
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:10px;
-  }
-
-  .icon-btn{
-    flex:0 0 auto;
-    width:46px; height:46px;
-    display:grid;
-    place-items:center;
-    border-radius:50%;
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    color:var(--text);
-    cursor:pointer;
-    transition:background .2s ease, transform .15s ease, border-color .2s ease;
-  }
-  .icon-btn:hover{ background:#1f252f; border-color:#313a4a; }
-  .icon-btn:active{ transform:scale(.94); }
-
-  .toggle{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    min-width:200px;
-    padding:13px 26px;
-    border-radius:999px;
+    width:100%;
+    padding:14px;
     border:0;
+    border-radius:14px;
     background:linear-gradient(180deg,#f6f8fb,#dde3ec);
     color:#0b0d11;
-    font:inherit;
-    font-size:15px;
-    font-weight:800;
     cursor:pointer;
-    box-shadow:0 14px 34px -16px rgba(255,255,255,.55);
-    transition:transform .15s ease, filter .2s ease, box-shadow .25s ease;
+    box-shadow:0 10px 24px -14px rgba(255,255,255,.45);
+    transition:transform .15s ease, filter .2s ease;
   }
   .toggle:hover{ filter:brightness(1.04); }
   .toggle:active{ transform:scale(.97); }
-
-  .hint{
-    flex:0 0 auto;
-    margin:0;
-    text-align:center;
-    font-size:12px;
-    color:var(--muted);
-    opacity:.8;
-  }
-  .hint kbd{
-    font-family:inherit;
-    font-size:11px;
-    padding:1px 7px;
-    border-radius:6px;
-    background:#181d25;
-    border:1px solid var(--line);
-    color:#b9c2d0;
-  }
-
-  /* ===== الجوال ===== */
-  @media (max-width:820px){
-    .topbar{ padding:12px 16px 8px; }
-
-    .workspace{
-      grid-template-columns:minmax(0,1fr);
-      grid-template-rows:minmax(0,1fr) auto;
-      gap:10px;
-      padding:0 12px max(12px, env(safe-area-inset-bottom));
-    }
-
-    .stage{ order:1; }
-    .frame{ border-radius:16px; }
-
-    .rail{
-      order:2;
-      flex-direction:row;
-      height:76px;
-      gap:8px;
-      padding:0 0 2px;
-      overflow-x:auto;
-      overflow-y:hidden;
-      -webkit-overflow-scrolling:touch;
-    }
-    .thumb{
-      width:94px;
-      height:100%;
-      aspect-ratio:auto;
-      border-radius:12px;
-    }
-
-    .toggle{
-      flex:1 1 auto;
-      min-width:0;
-      padding:13px 18px;
-      font-size:14px;
-    }
-    .hint{ display:none; }
-  }
+  .toggle svg{ display:block; }
 
   @media (prefers-reduced-motion: reduce){
     *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
@@ -344,97 +165,60 @@
 
 <div class="app">
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="dot"></span>
-      <h1>معرض قبل / بعد</h1>
-    </div>
-    <div class="counter">
-      <span id="counterNow">1</span>
-      <span class="sep">/</span>
-      <span id="counterAll">3</span>
-    </div>
-  </header>
+  <!-- المسرح -->
+  <div class="stage" id="stage" data-state="after">
+    <img class="layer layer-before" id="imgBefore" alt="قبل" draggable="false">
+    <img class="layer layer-after"  id="imgAfter"  alt="بعد" draggable="false">
+    <span class="badge" id="badge">بعد</span>
 
-  <div class="workspace">
+    <button class="nav-btn nav-prev" id="prevBtn" type="button" aria-label="السابق">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </button>
 
-    <!-- شريط المصغرات (يمين على الكمبيوتر، أسفل على الجوال) -->
-    <aside class="rail" id="rail" aria-label="الصور المصغرة"></aside>
-
-    <!-- منطقة العرض -->
-    <main class="stage">
-
-      <div class="frame" id="frame" data-state="after"
-           role="button" tabindex="0"
-           aria-label="اضغط للتبديل بين حالتي قبل وبعد">
-        <img class="layer layer-before" id="imgBefore" alt="الصورة قبل" draggable="false">
-        <img class="layer layer-after"  id="imgAfter"  alt="الصورة بعد" draggable="false">
-        <span class="badge" id="badge">بعد</span>
-      </div>
-
-      <div class="controls">
-        <button class="icon-btn" id="prevBtn" type="button" aria-label="الصورة السابقة">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
-
-        <button class="toggle" id="toggleBtn" type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 4v13"/><path d="M4 14l3 3 3-3"/>
-            <path d="M17 20V7"/><path d="M14 10l3-3 3 3"/>
-          </svg>
-          <span id="toggleText">عرض "قبل"</span>
-        </button>
-
-        <button class="icon-btn" id="nextBtn" type="button" aria-label="الصورة التالية">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-      </div>
-
-      <p class="hint">
-        اضغط على الصورة أو <kbd>المسافة</kbd> للتبديل — واستخدم <kbd>←</kbd> <kbd>→</kbd> للتنقل
-      </p>
-
-    </main>
+    <button class="nav-btn nav-next" id="nextBtn" type="button" aria-label="التالي">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
   </div>
+
+  <!-- زر تبديل قبل/بعد -->
+  <button class="toggle" id="toggleBtn" type="button" aria-label="تبديل قبل / بعد">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 4v13"/><path d="M4 14l3 3 3-3"/>
+      <path d="M17 20V7"/><path d="M14 10l3-3 3 3"/>
+    </svg>
+  </button>
+
 </div>
 
 <script>
 (function () {
   'use strict';
 
-  /* ====== بيانات الصور ====== */
   const IMAGES = [
-    { before: 'img/1.webp', after: 'img/1.2.webp' },
-    { before: 'img/2.webp', after: 'img/2.2.webp' },
-    { before: 'img/3.webp', after: 'img/3.2.webp' }
+    { before: 'img/1.webp',   after: 'img/1.2.webp' },
+    { before: 'img/2.webp',   after: 'img/2.2.webp' },
+    { before: 'img/3.webp',   after: 'img/3.2.webp' },
+    { before: 'img/4.webp',   after: 'img/4.2.webp' }
   ];
 
-  /* ====== العناصر ====== */
-  const frame       = document.getElementById('frame');
-  const imgBefore   = document.getElementById('imgBefore');
-  const imgAfter    = document.getElementById('imgAfter');
-  const badge       = document.getElementById('badge');
-  const toggleBtn   = document.getElementById('toggleBtn');
-  const toggleText  = document.getElementById('toggleText');
-  const prevBtn     = document.getElementById('prevBtn');
-  const nextBtn     = document.getElementById('nextBtn');
-  const rail        = document.getElementById('rail');
-  const counterNow  = document.getElementById('counterNow');
-  const counterAll  = document.getElementById('counterAll');
+  const stage      = document.getElementById('stage');
+  const imgBefore  = document.getElementById('imgBefore');
+  const imgAfter   = document.getElementById('imgAfter');
+  const badge      = document.getElementById('badge');
+  const toggleBtn  = document.getElementById('toggleBtn');
+  const prevBtn    = document.getElementById('prevBtn');
+  const nextBtn    = document.getElementById('nextBtn');
 
-  /* ====== الحالة ====== */
   let index = 0;
   let showAfter = true;
-  const thumbs = [];
 
-  /* ====== أدوات ====== */
   function fallback(img, label) {
     if (img.dataset.fb === '1') return;
     img.dataset.fb = '1';
@@ -456,36 +240,6 @@
     img.src = src;
   }
 
-  /* ====== بناء المصغرات مرة واحدة فقط ====== */
-  function buildThumbs() {
-    const frag = document.createDocumentFragment();
-
-    IMAGES.forEach(function (item, i) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'thumb';
-      btn.setAttribute('aria-label', 'الصورة رقم ' + (i + 1));
-
-      const im = document.createElement('img');
-      im.alt = '';
-      im.loading = 'lazy';
-      im.decoding = 'async';
-      im.addEventListener('error', function () {
-        fallback(im, 'صورة ' + (i + 1));
-      }, { once: true });
-      im.src = item.after;
-
-      btn.appendChild(im);
-      btn.addEventListener('click', function () { select(i); });
-
-      frag.appendChild(btn);
-      thumbs.push(btn);
-    });
-
-    rail.appendChild(frag);
-  }
-
-  /* ====== العرض ====== */
   function render() {
     const item = IMAGES[index];
     if (!item) return;
@@ -493,30 +247,12 @@
     setSrc(imgBefore, item.before, 'صورة ' + (index + 1) + ' — قبل');
     setSrc(imgAfter,  item.after,  'صورة ' + (index + 1) + ' — بعد');
 
-    frame.dataset.state = showAfter ? 'after' : 'before';
+    stage.dataset.state = showAfter ? 'after' : 'before';
     badge.textContent   = showAfter ? 'بعد' : 'قبل';
-    toggleText.textContent = showAfter ? 'عرض "قبل"' : 'عرض "بعد"';
-
-    counterNow.textContent = index + 1;
-
-    thumbs.forEach(function (t, i) {
-      t.setAttribute('aria-current', i === index ? 'true' : 'false');
-    });
-
-    const active = thumbs[index];
-    if (active) {
-      active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-    }
   }
 
-  /* ====== الأفعال ====== */
   function toggle() {
     showAfter = !showAfter;
-    render();
-  }
-
-  function select(i) {
-    index = i;
     render();
   }
 
@@ -525,67 +261,53 @@
     render();
   }
 
-  /* ====== الأحداث ====== */
   toggleBtn.addEventListener('click', toggle);
   prevBtn.addEventListener('click', function () { step(-1); });
   nextBtn.addEventListener('click', function () { step(1); });
 
-  /* نقرة على الصورة = تبديل (مع تجاهل النقرة الناتجة عن السحب) */
+  /* نقرة على الصورة = تبديل (مع تجاهل النقرة بعد السحب) */
   let swiped = false;
-  frame.addEventListener('click', function () {
+  stage.addEventListener('click', function (e) {
+    if (e.target.closest('.nav-btn')) return;
     if (swiped) { swiped = false; return; }
     toggle();
   });
 
   /* لوحة المفاتيح */
   document.addEventListener('keydown', function (e) {
-    const tag = (e.target && e.target.tagName) || '';
-    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
-
-    if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault();
-      toggle();
-    } else if (e.key === 'ArrowLeft') {       /* RTL: التالي */
-      step(1);
-    } else if (e.key === 'ArrowRight') {      /* RTL: السابق */
-      step(-1);
-    }
+    if (e.target.tagName === 'BUTTON') return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowLeft')  step(1);
+    else if (e.key === 'ArrowRight') step(-1);
   });
 
   /* السحب باللمس */
   let startX = null;
-  frame.addEventListener('pointerdown', function (e) {
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.nav-btn')) return;
     startX = e.clientX;
     swiped = false;
   });
-  frame.addEventListener('pointerup', function (e) {
+  stage.addEventListener('pointerup', function (e) {
     if (startX === null) return;
     const dx = e.clientX - startX;
     startX = null;
     if (Math.abs(dx) > 60) {
       swiped = true;
-      step(dx < 0 ? 1 : -1);   /* RTL: السحب لليسار = التالي */
+      step(dx < 0 ? 1 : -1);
     }
   });
-  frame.addEventListener('pointercancel', function () { startX = null; });
+  stage.addEventListener('pointercancel', function () { startX = null; });
 
-  /* ====== الإقلاع ====== */
-  function init() {
-    counterAll.textContent = IMAGES.length;
-    buildThumbs();
-
-    /* تحميل مسبق لكل الصور لتبديل فوري */
-    IMAGES.forEach(function (it) {
-      [it.before, it.after].forEach(function (src) {
-        const pre = new Image();
-        pre.src = src;
-      });
+  /* تحميل مسبق */
+  IMAGES.forEach(function (it) {
+    [it.before, it.after].forEach(function (src) {
+      const pre = new Image();
+      pre.src = src;
     });
+  });
 
-    render();
-  }
-
-  init();
+  render();
 })();
 </script>
 </body>
