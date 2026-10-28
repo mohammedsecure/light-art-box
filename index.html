@@ -10,7 +10,6 @@
 <style>
   :root{
     --bg:#0b0d11;
-    --panel:#12151b;
     --panel-2:#171b22;
     --line:#232936;
     --text:#e8ecf2;
@@ -19,7 +18,6 @@
   }
 
   *,*::before,*::after{ box-sizing:border-box; }
-
   html,body{ height:100%; }
 
   body{
@@ -35,7 +33,6 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* ===== الهيكل ===== */
   .app{
     height:100dvh;
     display:flex;
@@ -43,6 +40,49 @@
     overflow:hidden;
     padding:10px;
     gap:10px;
+  }
+
+  /* ===== الشريط العلوي الرفيع ===== */
+  .topbar{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+  }
+
+  .select-wrap{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    max-width:100%;
+  }
+
+  .category-select{
+    appearance:none;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    padding:7px 14px 7px 32px;
+    border-radius:10px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font:inherit;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    outline:none;
+    transition:border-color .2s ease;
+    max-width:100%;
+  }
+  .category-select:hover{ border-color:#313a4a; }
+  .category-select:focus-visible{ border-color:var(--after); }
+
+  .select-arrow{
+    position:absolute;
+    left:10px;
+    pointer-events:none;
+    color:var(--text);
+    opacity:.7;
   }
 
   /* ===== المسرح ===== */
@@ -82,7 +122,6 @@
   .stage[data-state="after"]  .layer-after,
   .stage[data-state="before"] .layer-before{ opacity:1; }
 
-  /* شارة الحالة */
   .badge{
     position:absolute;
     top:10px;
@@ -111,7 +150,14 @@
   .stage[data-state="after"]  .badge{ color:var(--after);  border-color:rgba(52,211,153,.35); }
   .stage[data-state="before"] .badge{ color:var(--before); border-color:rgba(251,191,36,.35); }
 
-  /* أسهم التنقل الجانبية */
+  /* حالة فارغة: كل شيء مخفي */
+  .stage[data-state="empty"] .layer,
+  .stage[data-state="empty"] .badge,
+  .stage[data-state="empty"] .nav-btn{
+    display:none;
+  }
+
+  /* أسهم التنقل */
   .nav-btn{
     position:absolute;
     top:50%;
@@ -127,16 +173,17 @@
     cursor:pointer;
     backdrop-filter:blur(8px);
     -webkit-backdrop-filter:blur(8px);
-    transition:background .2s ease, transform .15s ease;
+    transition:background .2s ease, transform .15s ease, opacity .2s ease;
     z-index:3;
   }
-  .nav-btn:hover{ background:rgba(30,36,46,.85); }
-  .nav-btn:active{ transform:translateY(-50%) scale(.92); }
+  .nav-btn:hover:not(:disabled){ background:rgba(30,36,46,.85); }
+  .nav-btn:active:not(:disabled){ transform:translateY(-50%) scale(.92); }
+  .nav-btn:disabled{ opacity:.3; cursor:not-allowed; }
 
   .nav-prev{ inset-inline-start:10px; }
   .nav-next{ inset-inline-end:10px; }
 
-  /* ===== زر التبديل السفلي ===== */
+  /* زر التبديل */
   .toggle{
     flex:0 0 auto;
     display:flex;
@@ -150,10 +197,11 @@
     color:#0b0d11;
     cursor:pointer;
     box-shadow:0 10px 24px -14px rgba(255,255,255,.45);
-    transition:transform .15s ease, filter .2s ease;
+    transition:transform .15s ease, filter .2s ease, opacity .2s ease;
   }
-  .toggle:hover{ filter:brightness(1.04); }
-  .toggle:active{ transform:scale(.97); }
+  .toggle:hover:not(:disabled){ filter:brightness(1.04); }
+  .toggle:active:not(:disabled){ transform:scale(.97); }
+  .toggle:disabled{ opacity:.3; cursor:not-allowed; }
   .toggle svg{ display:block; }
 
   @media (prefers-reduced-motion: reduce){
@@ -165,8 +213,18 @@
 
 <div class="app">
 
-  <!-- المسرح -->
-  <div class="stage" id="stage" data-state="before">
+  <header class="topbar">
+    <div class="select-wrap">
+      <select id="categorySelect" class="category-select" aria-label="التصنيف"></select>
+      <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+    </div>
+  </header>
+
+  <div class="stage" id="stage" data-state="empty">
     <img class="layer layer-before" id="imgBefore" alt="قبل" draggable="false">
     <img class="layer layer-after"  id="imgAfter"  alt="بعد" draggable="false">
     <span class="badge" id="badge">قبل</span>
@@ -186,7 +244,6 @@
     </button>
   </div>
 
-  <!-- زر تبديل قبل/بعد -->
   <button class="toggle" id="toggleBtn" type="button" aria-label="تبديل قبل / بعد">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -201,73 +258,152 @@
 (function () {
   'use strict';
 
-  const IMAGES = [
-    { before: 'img/1.webp',   after: 'img/1.2.webp' },
-    { before: 'img/2.webp',   after: 'img/2.2.webp' },
-    { before: 'img/3.webp',   after: 'img/3.2.webp' },
-    { before: 'img/4.webp',   after: 'img/4.2.webp' },
-    { before: 'img/5.webp',   after: 'img/5.2.webp' }
+  /* ================= الإعدادات ================= */
+
+  // مسار الصورة — غيّر هذا السطر فقط لتغيير الامتداد أو المجلد
+  function getImagePath(n) {
+    return 'img/' + n + '.webp';
+  }
+
+  const CATEGORIES = [
+    { name: 'تحفيزي',        from: 1,   to: 30  },
+    { name: 'ديني',          from: 31,  to: 60  },
+    { name: 'أمومة وأطفال',  from: 61,  to: 80  },
+    { name: 'تخرج جامعة',    from: 81,  to: 110 },
+    { name: 'أنمي',          from: 111, to: 150 },
+    { name: 'جمل مشهورة',    from: 151, to: 180 },
+    { name: 'منوعات',        from: 181, to: 200 }
   ];
 
-  const stage      = document.getElementById('stage');
-  const imgBefore  = document.getElementById('imgBefore');
-  const imgAfter   = document.getElementById('imgAfter');
-  const badge      = document.getElementById('badge');
-  const toggleBtn  = document.getElementById('toggleBtn');
-  const prevBtn    = document.getElementById('prevBtn');
-  const nextBtn    = document.getElementById('nextBtn');
+  /* ================= عناصر DOM ================= */
 
-  let index = 0;
-  let showAfter = false; /* تبدأ الواجهة بحالة "قبل" */
+  const stage          = document.getElementById('stage');
+  const imgBefore      = document.getElementById('imgBefore');
+  const imgAfter       = document.getElementById('imgAfter');
+  const badge          = document.getElementById('badge');
+  const prevBtn        = document.getElementById('prevBtn');
+  const nextBtn        = document.getElementById('nextBtn');
+  const toggleBtn      = document.getElementById('toggleBtn');
+  const categorySelect = document.getElementById('categorySelect');
 
-  function fallback(img, label) {
-    if (img.dataset.fb === '1') return;
-    img.dataset.fb = '1';
-    const svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">' +
-        '<rect width="800" height="600" fill="#171b22"/>' +
-        '<text x="400" y="312" text-anchor="middle" ' +
-              'font-family="Cairo, sans-serif" font-size="34" fill="#5b6577">' +
-          label +
-        '</text>' +
-      '</svg>';
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  /* ================= الحالة ================= */
+
+  let pairs       = [];   // [{ before, after }, ...]
+  let pairIndex   = 0;
+  let showAfter   = false;
+  let scanToken   = 0;    // لإلغاء الفحص السابق عند تغيير التصنيف
+
+  /* ================= أدوات ================= */
+
+  // اختبار تواجد الصورة (بدون عرضها، وبدون أيقونة كسر)
+  function testImage(src, timeout = 5000) {
+    return new Promise(function (resolve) {
+      const img = new Image();
+      let done = false;
+      const finish = function (ok) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(ok);
+      };
+      const timer = setTimeout(function () { finish(false); }, timeout);
+      img.onload  = function () { finish(true);  };
+      img.onerror = function () { finish(false); };
+      img.src = src;
+    });
   }
 
-  function setSrc(img, src, label) {
-    if (img.dataset.src === src) return;
-    img.dataset.src = src;
-    img.onerror = function () { fallback(img, label); };
-    img.src = src;
-  }
+  /* ================= العرض ================= */
 
-  function render() {
-    const item = IMAGES[index];
-    if (!item) return;
-
-    setSrc(imgBefore, item.before, 'صورة ' + (index + 1) + ' — قبل');
-    setSrc(imgAfter,  item.after,  'صورة ' + (index + 1) + ' — بعد');
-
+  function renderImage() {
+    if (pairs.length === 0) {
+      stage.dataset.state = 'empty';
+      return;
+    }
+    const p = pairs[pairIndex];
+    if (imgBefore.getAttribute('src') !== p.before) imgBefore.src = p.before;
+    if (imgAfter.getAttribute('src')  !== p.after)  imgAfter.src  = p.after;
     stage.dataset.state = showAfter ? 'after' : 'before';
     badge.textContent   = showAfter ? 'بعد' : 'قبل';
   }
 
+  function updateControls() {
+    const has = pairs.length > 0;
+    prevBtn.disabled   = !has || pairIndex === 0;
+    nextBtn.disabled   = !has || pairIndex === pairs.length - 1;
+    toggleBtn.disabled = !has;
+  }
+
+  function render() {
+    renderImage();
+    updateControls();
+  }
+
+  /* ================= الفحص التسلسلي للتصنيف ================= */
+
+  async function scanCategory(catIndex) {
+    const myToken = ++scanToken;
+
+    // إعادة الضبط
+    pairs = [];
+    pairIndex = 0;
+    showAfter = false;
+    render();          // يُظهر الحالة الفارغة
+
+    const cat = CATEGORIES[catIndex];
+    let n = cat.from;
+
+    while (n <= cat.to) {
+      if (myToken !== scanToken) return;
+
+      const before = getImagePath(n);
+      const after  = getImagePath(n + 1);
+      const [okB, okA] = await Promise.all([testImage(before), testImage(after)]);
+
+      if (myToken !== scanToken) return;
+      if (!okB || !okA) break;   // أول زوج ناقص => توقف
+
+      pairs.push({ before: before, after: after });
+
+      // أول زوج فقط نعيد الرسم لإظهاره فورًا
+      if (pairs.length === 1) render();
+      else updateControls();
+
+      n += 2;
+    }
+
+    if (myToken !== scanToken) return;
+    updateControls();
+  }
+
+  /* ================= الأفعال ================= */
+
   function toggle() {
+    if (pairs.length === 0) return;
     showAfter = !showAfter;
-    render();
+    renderImage();
   }
 
   function step(dir) {
-    index = (index + dir + IMAGES.length) % IMAGES.length;
-    showAfter = false; /* عند الانتقال لصورة جديدة نبدأ بـ "قبل" */
+    if (pairs.length === 0) return;
+    const i = pairIndex + dir;
+    if (i < 0 || i >= pairs.length) return;
+    pairIndex = i;
+    showAfter = false;
     render();
   }
+
+  /* ================= الأحداث ================= */
 
   toggleBtn.addEventListener('click', toggle);
   prevBtn.addEventListener('click', function () { step(-1); });
   nextBtn.addEventListener('click', function () { step(1); });
 
-  /* نقرة على الصورة = تبديل (مع تجاهل النقرة بعد السحب) */
+  categorySelect.addEventListener('change', function (e) {
+    scanCategory(parseInt(e.target.value, 10));
+  });
+
+  // نقرة على المسرح = تبديل (مع تجاهل النقرة بعد السحب)
   let swiped = false;
   stage.addEventListener('click', function (e) {
     if (e.target.closest('.nav-btn')) return;
@@ -275,15 +411,16 @@
     toggle();
   });
 
-  /* لوحة المفاتيح */
+  // لوحة المفاتيح
   document.addEventListener('keydown', function (e) {
-    if (e.target.tagName === 'BUTTON') return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'BUTTON' || tag === 'SELECT') return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
     else if (e.key === 'ArrowLeft')  step(1);
     else if (e.key === 'ArrowRight') step(-1);
   });
 
-  /* السحب باللمس */
+  // السحب باللمس
   let startX = null;
   stage.addEventListener('pointerdown', function (e) {
     if (e.target.closest('.nav-btn')) return;
@@ -301,15 +438,16 @@
   });
   stage.addEventListener('pointercancel', function () { startX = null; });
 
-  /* تحميل مسبق */
-  IMAGES.forEach(function (it) {
-    [it.before, it.after].forEach(function (src) {
-      const pre = new Image();
-      pre.src = src;
-    });
+  /* ================= الإقلاع ================= */
+
+  CATEGORIES.forEach(function (c, i) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name;
+    categorySelect.appendChild(opt);
   });
 
-  render();
+  scanCategory(0);
 })();
 </script>
 </body>
