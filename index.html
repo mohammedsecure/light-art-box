@@ -42,7 +42,7 @@
     gap:10px;
   }
 
-  /* ===== الشريط العلوي الرفيع ===== */
+  /* ===== الشريط العلوي ===== */
   .topbar{
     flex:0 0 auto;
     display:flex;
@@ -150,14 +150,12 @@
   .stage[data-state="after"]  .badge{ color:var(--after);  border-color:rgba(52,211,153,.35); }
   .stage[data-state="before"] .badge{ color:var(--before); border-color:rgba(251,191,36,.35); }
 
-  /* حالة فارغة: كل شيء مخفي */
   .stage[data-state="empty"] .layer,
   .stage[data-state="empty"] .badge,
   .stage[data-state="empty"] .nav-btn{
     display:none;
   }
 
-  /* أسهم التنقل */
   .nav-btn{
     position:absolute;
     top:50%;
@@ -183,7 +181,6 @@
   .nav-prev{ inset-inline-start:10px; }
   .nav-next{ inset-inline-end:10px; }
 
-  /* زر التبديل */
   .toggle{
     flex:0 0 auto;
     display:flex;
@@ -258,25 +255,47 @@
 (function () {
   'use strict';
 
-  /* ================= الإعدادات ================= */
+  /* ══════════════════════════════════════════════════════════
+     ⬇⬇⬇  عدّل هذا الجزء فقط عند إضافة أو حذف مجلد  ⬇⬇⬇
 
-  // مسار الصورة — غيّر هذا السطر فقط لتغيير الامتداد أو المجلد
-  function getImagePath(n) {
-    return 'img/' + n + '.webp';
-  }
+     بنية المجلدات المتوقعة (بجانب index.html):
+
+       تحفيزي/
+         1.webp  ← قبل
+         2.webp  ← بعد
+         3.webp  ← قبل
+         4.webp  ← بعد
+         ...
+       ديني/
+         1.webp  ← قبل
+         2.webp  ← بعد
+         ...
+       (وهكذا لكل مجلد)
+
+     داخل كل مجلد: الفردي = "قبل"، الذي يليه = "بعد".
+     ══════════════════════════════════════════════════════════ */
 
   const CATEGORIES = [
-    { name: 'تحفيزي',        from: 1,   to: 30  },
-    { name: 'ديني',          from: 31,  to: 60  },
-    { name: 'أمومة وأطفال',  from: 61,  to: 80  },
-    { name: 'تخرج جامعة',    from: 81,  to: 110 },
-    { name: 'أنمي',          from: 111, to: 150 },
-    { name: 'جمل مشهورة',    from: 151, to: 180 },
-    { name: 'منوعات',        from: 181, to: 200 }
+    'تحفيزي',
+    'ديني',
+    'أمومة وأطفال',
+    'تخرج جامعة',
+    'أنمي',
+    'جمل مشهورة',
+    'منوعات'
   ];
 
-  /* ================= عناصر DOM ================= */
+  const IMAGE_EXT = 'webp';   // غيّرها إلى 'jpg' أو 'png' إن لزم
 
+  /* ══════════════════════════════════════════════════════════ */
+
+  const MAX_PAIRS_PER_CATEGORY = 500; // حد أمان ضد الحلقة اللانهائية
+
+  function getImagePath(folder, n) {
+    return encodeURIComponent(folder) + '/' + n + '.' + IMAGE_EXT;
+  }
+
+  /* ============ عناصر DOM ============ */
   const stage          = document.getElementById('stage');
   const imgBefore      = document.getElementById('imgBefore');
   const imgAfter       = document.getElementById('imgAfter');
@@ -286,26 +305,24 @@
   const toggleBtn      = document.getElementById('toggleBtn');
   const categorySelect = document.getElementById('categorySelect');
 
-  /* ================= الحالة ================= */
+  /* ============ الحالة ============ */
+  let pairs     = [];
+  let pairIndex = 0;
+  let showAfter = false;
+  let scanToken = 0;
 
-  let pairs       = [];   // [{ before, after }, ...]
-  let pairIndex   = 0;
-  let showAfter   = false;
-  let scanToken   = 0;    // لإلغاء الفحص السابق عند تغيير التصنيف
-
-  /* ================= أدوات ================= */
-
-  // اختبار تواجد الصورة (بدون عرضها، وبدون أيقونة كسر)
-  function testImage(src, timeout = 5000) {
+  /* ============ أدوات ============ */
+  function testImage(src, timeout) {
+    timeout = timeout || 5000;
     return new Promise(function (resolve) {
       const img = new Image();
       let done = false;
-      const finish = function (ok) {
+      function finish(ok) {
         if (done) return;
         done = true;
         clearTimeout(timer);
         resolve(ok);
-      };
+      }
       const timer = setTimeout(function () { finish(false); }, timeout);
       img.onload  = function () { finish(true);  };
       img.onerror = function () { finish(false); };
@@ -313,8 +330,7 @@
     });
   }
 
-  /* ================= العرض ================= */
-
+  /* ============ العرض ============ */
   function renderImage() {
     if (pairs.length === 0) {
       stage.dataset.state = 'empty';
@@ -339,33 +355,29 @@
     updateControls();
   }
 
-  /* ================= الفحص التسلسلي للتصنيف ================= */
-
+  /* ============ فحص التصنيف ============ */
   async function scanCategory(catIndex) {
     const myToken = ++scanToken;
 
-    // إعادة الضبط
-    pairs = [];
+    pairs     = [];
     pairIndex = 0;
     showAfter = false;
-    render();          // يُظهر الحالة الفارغة
+    render();
 
-    const cat = CATEGORIES[catIndex];
-    let n = cat.from;
+    const folder = CATEGORIES[catIndex];
+    let n = 1;
 
-    while (n <= cat.to) {
+    while (pairs.length < MAX_PAIRS_PER_CATEGORY) {
       if (myToken !== scanToken) return;
 
-      const before = getImagePath(n);
-      const after  = getImagePath(n + 1);
-      const [okB, okA] = await Promise.all([testImage(before), testImage(after)]);
+      const before = getImagePath(folder, n);
+      const after  = getImagePath(folder, n + 1);
+      const res = await Promise.all([testImage(before), testImage(after)]);
 
       if (myToken !== scanToken) return;
-      if (!okB || !okA) break;   // أول زوج ناقص => توقف
+      if (!res[0] || !res[1]) break;
 
       pairs.push({ before: before, after: after });
-
-      // أول زوج فقط نعيد الرسم لإظهاره فورًا
       if (pairs.length === 1) render();
       else updateControls();
 
@@ -376,8 +388,7 @@
     updateControls();
   }
 
-  /* ================= الأفعال ================= */
-
+  /* ============ الأفعال ============ */
   function toggle() {
     if (pairs.length === 0) return;
     showAfter = !showAfter;
@@ -393,8 +404,7 @@
     render();
   }
 
-  /* ================= الأحداث ================= */
-
+  /* ============ الأحداث ============ */
   toggleBtn.addEventListener('click', toggle);
   prevBtn.addEventListener('click', function () { step(-1); });
   nextBtn.addEventListener('click', function () { step(1); });
@@ -403,7 +413,6 @@
     scanCategory(parseInt(e.target.value, 10));
   });
 
-  // نقرة على المسرح = تبديل (مع تجاهل النقرة بعد السحب)
   let swiped = false;
   stage.addEventListener('click', function (e) {
     if (e.target.closest('.nav-btn')) return;
@@ -411,7 +420,6 @@
     toggle();
   });
 
-  // لوحة المفاتيح
   document.addEventListener('keydown', function (e) {
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'BUTTON' || tag === 'SELECT') return;
@@ -420,7 +428,6 @@
     else if (e.key === 'ArrowRight') step(-1);
   });
 
-  // السحب باللمس
   let startX = null;
   stage.addEventListener('pointerdown', function (e) {
     if (e.target.closest('.nav-btn')) return;
@@ -438,12 +445,11 @@
   });
   stage.addEventListener('pointercancel', function () { startX = null; });
 
-  /* ================= الإقلاع ================= */
-
-  CATEGORIES.forEach(function (c, i) {
+  /* ============ الإقلاع ============ */
+  CATEGORIES.forEach(function (name, i) {
     const opt = document.createElement('option');
     opt.value = i;
-    opt.textContent = c.name;
+    opt.textContent = name;
     categorySelect.appendChild(opt);
   });
 
